@@ -66,10 +66,10 @@ void VLangtonParalela::exec_paralelo() {
 
     formiga = formigas[rank]; //inicializa a posição das formigas
 
-    subGrade.redimencionar(pow(tamanhoMatriz, 2)/4, 0); //redimenciona e inicializa cada submatriz
+    subGrade.redimencionar(tamanhoMatriz*tamanhoMatriz/4, 0); //redimenciona e inicializa cada submatriz
 
     if(rank == 0){
-        gradeTotal.redimencionar(pow(tamanhoMatriz, 2));
+        gradeTotal.redimencionar(tamanhoMatriz);
     }
 
     MPI_Gather(subGrade.dados(), pow(tamanhoMatriz, 2)/4, MPI_INT, gradeTotal.dados(), pow(tamanhoMatriz, 2)/4, MPI_INT, 0, MPI_COMM_WORLD);
@@ -140,16 +140,17 @@ void VLangtonParalela::exec_paralelo() {
                 break;
             }
 
-            formigas[0] = formiga;
+            if(size != 1)
+                formigas[0] = formiga;
 
 
             for(int i=1; i<size; i++){
                 MPI_Recv(&formigas[i], sizeof(Formiga), MPI_BYTE, i, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
             }
 
-            for(int i=0; i<size; i++) {//salva a cor da posição atual
+            for(int i=0; i<4; i++) {//salva a cor da posição atual
                 formigas[i].corPsicaoAtual = gradeTotal[{formigas[i].x, formigas[i].y}];
-                if((formigas[i].x > 0 && formigas[i].x < tamanhoMatriz) && (formigas[i].y > 0 && formigas[i].y < tamanhoMatriz)) {
+                if((formigas[i].x > 0 && formigas[i].x < tamanhoMatriz-1) && (formigas[i].y > 0 && formigas[i].y < tamanhoMatriz-1)) {//a falha de segmentação que deu em sala de aula diz repeito a esse trcho do código. Corrigido
                     switch (formigas[i].direcao) {
                         case 'c':
                             formigas[i].corDoProx = gradeTotal[{formigas[i].x, formigas[i].y - 1}];
@@ -170,16 +171,25 @@ void VLangtonParalela::exec_paralelo() {
             for(int i=1; i<size; i++){
                 MPI_Send(&formigas[i], sizeof(Formiga), MPI_BYTE, i, 0, MPI_COMM_WORLD);
             }
-            formiga = formigas[0];
 
-            passoDaFormiga();
+            if(size == 1){
+                for (int j = 0; j < formigas.size(); ++j) {
+                    formiga = formigas[j];
+                    passoDaFormiga();
+                    formigas[j] = formiga;
+                }
+            } else{
+                formiga = formigas[0];
+                passoDaFormiga();
+                formigas[0] = formiga;
+            }
 
-            formigas[0] = formiga;
+
             for(int i=1; i<size; i++){
                 MPI_Recv(&formigas[i], sizeof(Formiga), MPI_BYTE, i, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
             }
 
-            for(int i=0; i<size; i++)//copia a modificação para a matriz total
+            for(int i=0; i<4; i++)//copia a modificação para a matriz total
                 gradeTotal[{formigas[i].anteriorX, formigas[i].anteriorY}] = formigas[i].corPsicaoAtual;
 
             for(int i=0; i<size; i++) {//copia a modificação para a matriz total
@@ -231,7 +241,7 @@ void VLangtonParalela::exec_paralelo() {
 }
 
 void VLangtonParalela::desenha(sf::RenderWindow &window) {
-    for(int i=0; i< size; i++)
+    for(int i=0; i< 4; i++)
         pixel[formigas[i].anteriorX][formigas[i].anteriorY].setFillColor(corExistentes[i][formigas[i].corPsicaoAtual]);
     for(int i=0; i<tamanhoMatriz; i++){
         for(int j=0; j<tamanhoMatriz; j++){

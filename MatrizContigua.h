@@ -50,13 +50,13 @@ public:
     std::vector<T> getVetor(){return this->dados_; }
 
     void redimencionar(size_t tamanho, T valor){//redimencionar e inicializar
-        this->dados_.resize(tamanho, valor);
-        this->colunas_ = this->linhas_ = sqrt(tamanho);
+        this->dados_.resize(tamanho*tamanho, valor);
+        this->colunas_ = this->linhas_ = tamanho;
     }
 
     void redimencionar(size_t tamanho){//redimencionar
-        this->dados_.resize(tamanho);
-        this->colunas_ = this->linhas_ = sqrt(tamanho);
+        this->dados_.resize(tamanho*tamanho);
+        this->colunas_ = this->linhas_ = tamanho;
     }
 
     void redimencionar(size_t tamanhox, size_t tamanhoy){

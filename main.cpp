@@ -4,7 +4,7 @@
 #include "MatrizContigua.h"
 
 int main(int argc, char** argv) {
-    VLangtonParalela x(50, "DDEE", argc, argv);
+    VLangtonParalela x(50, "EDDDDDEED", argc, argv);
     x.exec();
 
     //VLangtonAnt x;
